@@ -320,6 +320,27 @@ uint32_t ETH_GetPTPRegister(uint32_t ETH_PTPReg)
 #define ADJ_FREQ_BASE_INCREMENT   43
 #endif
 
+#if defined(USE_STM32F7_DISCOVERY)
+// Examples of subsecond increment and addend values using SysClk = 168 MHz
+//
+// Addend * Increment = 2^63 / SysClk
+//
+// ptp_tick = Increment * 10^9 / 2^31
+//
+// +-----------+-----------+------------+
+// | ptp tick  | Increment | Addend     |
+// +-----------+-----------+------------+
+// |  119 ns   |   255     | 0x0CD53055 |
+// |  100 ns   |   215     | 0x0F386300 |
+// |   50 ns   |   107     | 0x1E953032 |
+// |   20 ns   |    43     | 0x4C19EF00 |
+// |   14 ns   |    30     | 0x6D141AD6 |
+// +-----------+-----------+------------+
+#warning "TODO: Adjust values"
+#define ADJ_FREQ_BASE_ADDEND      0x4C19EF00
+#define ADJ_FREQ_BASE_INCREMENT   43
+#endif
+
 #if defined(USE_STM32F4XX_NUCLEO_144)
 // Examples of subsecond increment and addend values using SysClk = 168 MHz
 //

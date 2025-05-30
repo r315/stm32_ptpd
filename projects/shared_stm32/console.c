@@ -36,6 +36,7 @@
 #define CONSOLE_GPIO_AF           LL_GPIO_AF_7
 #define CONSOLE_USART             USART3
 #define CONSOLE_IRQ               USART3_IRQn
+#define CONSOLE_IRQHandler        USART3_IRQHandler
 #define CONSOLE_GPIO              GPIOD
 #define CONSOLE_TX_PIN            LL_GPIO_PIN_8
 #define CONSOLE_RX_PIN            LL_GPIO_PIN_9
@@ -58,6 +59,7 @@
 #define CONSOLE_GPIO_AF           LL_GPIO_AF_7
 #define CONSOLE_USART             USART3
 #define CONSOLE_IRQ               USART3_IRQn
+#define CONSOLE_IRQHandler        USART3_IRQHandler
 #define CONSOLE_GPIO              GPIOD
 #define CONSOLE_TX_PIN            LL_GPIO_PIN_8
 #define CONSOLE_RX_PIN            LL_GPIO_PIN_9
@@ -80,11 +82,35 @@
 #define CONSOLE_GPIO_AF           LL_GPIO_AF_8
 #define CONSOLE_USART             USART6
 #define CONSOLE_IRQ               USART6_IRQn
+#define CONSOLE_IRQHandler        USART6_IRQHandler
 #define CONSOLE_GPIO              GPIOC
 #define CONSOLE_TX_PIN            LL_GPIO_PIN_6
 #define CONSOLE_RX_PIN            LL_GPIO_PIN_7
 #define CONSOLE_TX_PINSOURCE      LL_GPIO_PIN_6
 #define CONSOLE_RX_PINSOURCE      LL_GPIO_PIN_7
+#endif
+
+#if defined(USE_STM32F7_DISCOVERY)
+//
+// USART6 Console Hardware Configuration
+//
+// GPIO Inputs
+//
+// PC6         SERIAL_TX
+// PC7         SERIAL_RX
+//
+#define CONSOLE_PERIPH_GPIO       LL_AHB1_GRP1_PERIPH_GPIOA
+#define CONSOLE_PERIPH_USART      LL_APB2_GRP1_PERIPH_USART1
+#define CONSOLE_PERIPH_ENABLECLK  LL_APB2_GRP1_EnableClock
+#define CONSOLE_GPIO_AF           LL_GPIO_AF_7
+#define CONSOLE_USART             USART1
+#define CONSOLE_IRQ               USART1_IRQn
+#define CONSOLE_IRQHandler        USART1_IRQHandler
+#define CONSOLE_GPIO              GPIOA
+#define CONSOLE_TX_PIN            LL_GPIO_PIN_9
+#define CONSOLE_RX_PIN            LL_GPIO_PIN_10
+#define CONSOLE_TX_PINSOURCE      LL_GPIO_PIN_9
+#define CONSOLE_RX_PINSOURCE      LL_GPIO_PIN_10
 #endif
 
 #if defined(USE_STM32F405_OLIMEX)
@@ -102,6 +128,7 @@
 #define CONSOLE_GPIO_AF           LL_GPIO_AF_8
 #define CONSOLE_USART             USART6
 #define CONSOLE_IRQ               USART6_IRQn
+#define CONSOLE_IRQHandler        USART6_IRQHandler
 #define CONSOLE_GPIO              GPIOC
 #define CONSOLE_TX_PIN            LL_GPIO_PIN_6
 #define CONSOLE_RX_PIN            LL_GPIO_PIN_7
@@ -142,7 +169,7 @@ __WEAK void shutdown_system(void)
 }
 
 #if defined(USE_STM32F7XX_NUCLEO_144)
-void USART3_IRQHandler(void)
+void CONSOLE_IRQHandler(void)
 {
   // Keep track if the interrupt was handled.
   bool int_handled = false;
@@ -228,7 +255,7 @@ void USART3_IRQHandler(void)
 #endif
 
 #if defined(USE_STM32F4XX_NUCLEO_144)
-void USART3_IRQHandler(void)
+void CONSOLE_IRQHandler(void)
 {
   // Check for the TXE interrupt.
   if (((LL_USART_IsEnabledIT_TXE(CONSOLE_USART)) && (LL_USART_IsActiveFlag_TXE(CONSOLE_USART))))
@@ -284,7 +311,64 @@ void USART3_IRQHandler(void)
 #endif
 
 #if defined(USE_STM32F4_DISCOVERY)
-void USART6_IRQHandler(void)
+void CONSOLE_IRQHandler(void)
+{
+  // Check for the TXE interrupt.
+  if (((LL_USART_IsEnabledIT_TXE(CONSOLE_USART)) && (LL_USART_IsActiveFlag_TXE(CONSOLE_USART))))
+  {
+    // Are there characters to send?
+    if (console_send_tail != console_send_head)
+    {
+      // Put the next character in the transmit buffer which clears the interrupt.
+      LL_USART_TransmitData9(CONSOLE_USART, (uint16_t) console_send_buffer[console_send_tail]);
+
+      // Increment the tail.
+      console_send_tail = (console_send_tail + 1) % CONSOLE_SEND_BUFFER_SIZE;
+    }
+
+    // Disable transmitter empty if all data is sent.
+    if (console_send_tail == console_send_head)
+    {
+      // Disable the transmit buffer empty interrupt.
+      LL_USART_DisableIT_TXE(CONSOLE_USART);
+    }
+
+    // Signal the send event.
+    osEventFlagsSet(console_event_id, CONSOLE_EVENT_SEND);
+  }
+
+  // Is the USART_IT_RXNE interrupt enabled?
+  if (((LL_USART_IsEnabledIT_RXNE(CONSOLE_USART)) && (LL_USART_IsActiveFlag_RXNE(CONSOLE_USART))))
+  {
+    // Read the received character which will clear the interrupt.
+    char ch = (char) (LL_USART_ReceiveData9(CONSOLE_USART) & 0x7f);
+
+    // Determine the next head index.
+    size_t next_recv_head = (console_recv_head + 1) % CONSOLE_RECV_BUFFER_SIZE;
+
+    // Make sure receiving this character doesn't overflow the receive buffer.
+    if (next_recv_head != console_recv_tail)
+    {
+      // Insert the character into the receive buffer.
+      console_recv_buffer[console_recv_head] = ch;
+
+      // Update the receive head.
+      console_recv_head = next_recv_head;
+    }
+
+    // Signal the receive event.
+    osEventFlagsSet(console_event_id, CONSOLE_EVENT_RECV);
+
+    // Notify the console thread of I/O available. This is a more general purpose
+    // event specifically on the console thread to indicate I/O has taken place.
+    if (console_thread_id) osThreadFlagsSet(console_thread_id, CONSOLE_THREAD_EVENT_IO);
+  }
+}
+#endif
+
+
+#if defined(USE_STM32F7_DISCOVERY)
+void CONSOLE_IRQHandler(void)
 {
   // Check for the TXE interrupt.
   if (((LL_USART_IsEnabledIT_TXE(CONSOLE_USART)) && (LL_USART_IsActiveFlag_TXE(CONSOLE_USART))))
@@ -340,7 +424,7 @@ void USART6_IRQHandler(void)
 #endif
 
 #if defined(USE_STM32F405_OLIMEX)
-void USART6_IRQHandler(void)
+void CONSOLE_IRQHandler(void)
 {
   // Check for the TXE interrupt.
   if (((LL_USART_IsEnabledIT_TXE(CONSOLE_USART)) && (LL_USART_IsActiveFlag_TXE(CONSOLE_USART))))
@@ -441,7 +525,7 @@ static void console_thread(void *arg)
   LL_USART_EnableIT_RXNE(CONSOLE_USART);
 
   // Run the console shell.
-  for (;;) 
+  for (;;)
   {
     // Tell the user the shell is starting.
     console_puts("Starting console shell...\n");
@@ -483,8 +567,8 @@ void console_init(void)
   gpio_init.Alternate = CONSOLE_GPIO_AF;
   LL_GPIO_Init(CONSOLE_GPIO, &gpio_init);
 
-  // USARTx configured as follows: 
-  // 115200 baud, 8 Bits, 1 Stop, No Parity, 
+  // USARTx configured as follows:
+  // 115200 baud, 8 Bits, 1 Stop, No Parity,
   // No Flow Control, Receive and Transmit Enabled.
   LL_USART_StructInit(&usart_init);
   usart_init.BaudRate = console_config_baudrate();

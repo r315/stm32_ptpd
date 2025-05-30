@@ -327,6 +327,10 @@ static err_t ethernetif_linkoutput(struct netif *netif, struct pbuf *p)
   osMutexAcquire(ethernetif_mutex_id, osWaitForever);
 
   // Transmit the frame.
+#if defined(USE_STM32F7_DISCOVERY)
+  #warning "TODO: HAL_ETH_TransmitFrame_IT"
+  hal_status = HAL_OK;
+#else
   hal_status = HAL_ETH_TransmitFrame_IT(&ethernetif_handle, framelength);
 
   // Increment the interface send count and bytes.
@@ -335,7 +339,7 @@ static err_t ethernetif_linkoutput(struct netif *netif, struct pbuf *p)
     ethernetif_send_count += 1;
     ethernetif_send_bytes += framelength;
   }
-
+#endif
 #if LWIP_PTPD
   // Keep track of the DMA TX descriptors used for PTP frames.
   if ((hal_status == HAL_OK) && is_ptp)
@@ -561,7 +565,11 @@ static void ethernetif_link_config(struct netif *netif)
   ethernetif_handle.Init.PhyAddress = LAN8742A_PHY_ADDRESS;
   ethernetif_handle.Init.MACAddr = &netif->hwaddr[0];
   ethernetif_handle.Init.RxMode = ETH_RXINTERRUPT_MODE;
+#if defined(USE_STM32F7_DISCOVERY)
+  #warning "TODO: TxMode"
+#else
   ethernetif_handle.Init.TxMode = ETH_TXINTERRUPT_MODE;
+#endif
   ethernetif_handle.Init.ChecksumMode = ETH_CHECKSUM_BY_HARDWARE;
   ethernetif_handle.Init.MediaInterface = ETH_MEDIA_INTERFACE_RMII;
   HAL_ETH_Init(&ethernetif_handle);
@@ -611,7 +619,7 @@ static void ethernetif_link_config(struct netif *netif)
   dma_init.DropTCPIPChecksumErrorFrame = ETH_DROPTCPIPCHECKSUMERRORFRAME_ENABLE;
   dma_init.ReceiveStoreForward = ETH_RECEIVESTOREFORWARD_ENABLE;
   dma_init.FlushReceivedFrame = ETH_FLUSHRECEIVEDFRAME_ENABLE;
-  dma_init.TransmitStoreForward = ETH_TRANSMITSTOREFORWARD_ENABLE;  
+  dma_init.TransmitStoreForward = ETH_TRANSMITSTOREFORWARD_ENABLE;
   dma_init.TransmitThresholdControl = ETH_TRANSMITTHRESHOLDCONTROL_64BYTES;
   dma_init.ForwardErrorFrames = ETH_FORWARDERRORFRAMES_DISABLE;
   dma_init.ForwardUndersizedGoodFrames = ETH_FORWARDUNDERSIZEDGOODFRAMES_DISABLE;
@@ -663,8 +671,11 @@ static void ethernetif_link_check(struct netif *netif)
     osMutexAcquire(ethernetif_mutex_id, osWaitForever);
 
     // Configure the Ethernet MAC and DMA.
+#if defined(USE_STM32F7_DISCOVERY)
+    #warning "TODO: HAL_ETH_Config"
+#else
     HAL_ETH_Config(&ethernetif_handle);
-
+#endif
     // Enable MAC and DMA transmission and reception.
     HAL_ETH_Start(&ethernetif_handle);
 
@@ -712,7 +723,7 @@ static void ethernetif_link_check(struct netif *netif)
   }
 }
 
-// This thread handles the actual reception of packets from the 
+// This thread handles the actual reception of packets from the
 // Ethernet interface. It uses the function ethernetif_linkinput() that
 // should handle the actual reception of bytes from the network
 // interface. Then the type of the received packet is determined and
@@ -856,7 +867,7 @@ err_t ethernetif_init(struct netif *netif)
   osMutexAttr_t ethernet_mutex_attrs =
   {
     .name = "ethernetif",
-    .attr_bits = 0U, 
+    .attr_bits = 0U,
     .cb_mem = ethernet_mutex_cb,
     .cb_size = sizeof(ethernet_mutex_cb)
   };

@@ -218,7 +218,7 @@ static bool is_ptp1588_frame(uint8_t *data)
 // strange results. You might consider waiting for space in the DMA queue to
 // become availale since the stack doesn't retry to send a packet dropped
 // because of memory failure (except for the TCP timers).
-static err_t ethernetif_linkoutput(struct netif *netif, struct pbuf *p)
+static err_t ethernetif_link_output(struct netif *netif, struct pbuf *p)
 {
   err_t errval;
   struct pbuf *q;
@@ -410,7 +410,7 @@ error:
 // and transfering the bytes of the incoming packet from the interface
 // into the pbuf.  Returns a pbuf filled with the received packet
 // (including MAC header) NULL on memory error.
-static struct pbuf *ethernetif_linkinput(struct netif *netif)
+static struct pbuf *ethernetif_link_input(struct netif *netif)
 {
   struct pbuf *p = NULL;
   struct pbuf *q = NULL;
@@ -747,7 +747,7 @@ static void ethernetif_thread(void *argument )
   for(;;)
   {
     // Get the next low level input.
-    struct pbuf *p = ethernetif_linkinput(netif);
+    struct pbuf *p = ethernetif_link_input(netif);
 
     // Should we wait for an event?
     while (p == NULL)
@@ -762,7 +762,7 @@ static void ethernetif_thread(void *argument )
       if ((flags & ETHERNETIF_EVENT_RECEIVE) == ETHERNETIF_EVENT_RECEIVE)
       {
         // Get the next low level input.
-        p = ethernetif_linkinput(netif);
+        p = ethernetif_link_input(netif);
       }
 
       // Do the flags indicate a timer event?
@@ -855,7 +855,7 @@ err_t ethernetif_init(struct netif *netif)
 #if LWIP_IPV6
   netif->output_ip6 = ethernetif_ethip6_output;
 #endif
-  netif->linkoutput = ethernetif_linkoutput;
+  netif->linkoutput = ethernetif_link_output;
 
   // Static event and thread control blocks.
   static uint32_t ethernet_event_cb[osRtxEventFlagsCbSize/4U] __attribute__((section(".bss.os.evflags.cb")));

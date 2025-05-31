@@ -6,6 +6,7 @@
 
 // LED Hardware Configuration
 //
+#if defined(USE_STM32F4XX_NUCLEO_144)
 // STM32F767 Nucleo-144 LED GPIO Outputs
 // STM32F429 Nucleo-144 LED GPIO Outputs
 //
@@ -24,13 +25,37 @@ static GPIO_TypeDef * const led_output_gpios[LED_COUNT] =
 };
 
 // Pins used to set LEDs on and off.
-static const uint16_t led_output_pins[LED_COUNT] = 
+static const uint16_t led_output_pins[LED_COUNT] =
 {
   LL_GPIO_PIN_0,
   LL_GPIO_PIN_7,
   LL_GPIO_PIN_14
 };
+#else
+// STM32F769 Discovery LED GPIO Outputs
+//
+// PJ13     LED_RED
+// PJ5      LED_GREEN
+// PA12     LED_GREEN
+//
 
+// GPIOS used to set LEDs on and off.
+// Note: Pointer is constant and immutable, but not the pointed data.
+static GPIO_TypeDef * const led_output_gpios[LED_COUNT] =
+{
+  GPIOJ,
+  GPIOJ,
+  GPIOA
+};
+
+// Pins used to set LEDs on and off.
+static const uint16_t led_output_pins[LED_COUNT] =
+{
+  LL_GPIO_PIN_13,
+  LL_GPIO_PIN_5,
+  LL_GPIO_PIN_12
+};
+#endif
 // Set the LED colors from the shell.
 static bool leds_shell_led(int argc, char **argv)
 {
@@ -88,7 +113,7 @@ static bool leds_shell_led(int argc, char **argv)
     shell_puts("Usage:\n");
     shell_puts("  led green|red|blue [on|off]\n");
   }
-  
+
   return true;
 }
 

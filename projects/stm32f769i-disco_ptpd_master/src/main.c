@@ -10,7 +10,7 @@
 #include "tick.h"
 #include "clocks.h"
 //#include "buttons.h"
-//#include "leds.h"
+#include "leds.h"
 #include "peek.h"
 #include "blink.h"
 #include "extint.h"
@@ -37,7 +37,7 @@ static const init_func_t init_functions[] =
   tick_init,
   clocks_init,
   //buttons_init,
-  //leds_init,
+  leds_init,
   blink_init,
   network_init,
   hardtime_init,

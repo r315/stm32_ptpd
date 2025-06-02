@@ -39,7 +39,7 @@
 //
 // PC6       USART6_TX      GPS_RX
 // PC7       USART6_RX      GPS_TX
-// PF15                     GPS_PPS
+// PB15                     GPS_PPS
 //
 
 #define RX_BUFFER_SIZE          128
@@ -303,16 +303,15 @@ static void gps_peripheral_init(void)
   gpio_init.Mode = LL_GPIO_MODE_INPUT;
   gpio_init.Pull = LL_GPIO_PULL_DOWN;
   gpio_init.Alternate = LL_GPIO_AF_0;
-  #warning "TODO: config PPS pin"
-  //LL_GPIO_Init(GPIOF, &gpio_init);
+  LL_GPIO_Init(GPIOB, &gpio_init);
 
   // Set the EXTI_Line15 callback function.
   extint_set_callback(LL_EXTI_LINE_15, gps_extint_handler);
 
-  // GPIOC will be used for for EXTI_Line15.
-  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTF, LL_SYSCFG_EXTI_LINE15);
+  // GPIOB will be used for for EXTI_Line15.
+  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTB, LL_SYSCFG_EXTI_LINE15);
 
-  // Enable EXTI_Line8 for rising edge change.
+  // Enable EXTI_Line15 for rising edge change.
   LL_EXTI_StructInit(&exti_init);
   exti_init.Line_0_31 = LL_EXTI_LINE_15;
   exti_init.Mode = LL_EXTI_MODE_IT;

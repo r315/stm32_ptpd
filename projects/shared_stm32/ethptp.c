@@ -469,6 +469,8 @@ void ethptp_start(uint32_t update_method)
 
   // The Time stamp counter starts operation as soon as it is initialized
   // with the value written in the Time stamp update register.
+
+  ethptp_set_pps(0); // 1Hz
 }
 
 // Get the PTP time.
@@ -552,3 +554,29 @@ void ethptp_adj_freq(int32_t adj_ppb)
   ETH_EnablePTPTimeStampAddend();
 }
 
+/**
+ * @brief
+ * 0000: 1 Hz with a pulse width of 125 ms for binary rollover and, of 100 ms for digital rollover
+ * 0001: 2 Hz with 50% duty cycle for binary rollover (digital rollover not recommended)
+ * 0010: 4 Hz with 50% duty cycle for binary rollover (digital rollover not recommended)
+ * 0011: 8 Hz with 50% duty cycle for binary rollover (digital rollover not recommended)
+ * 0100: 16 Hz with 50% duty cycle for binary rollover (digital rollover not recommended)
+ * ....
+ * 1111: 32768 Hz with 50% duty cycle for binary rollover (digital rollover not recommended)
+ */
+void ethptp_set_pps(uint8_t freq)
+{
+    LL_GPIO_InitTypeDef gpio_init;
+
+#if defined(USE_STM32F7_DISCOVERY)
+    (*(__IO uint32_t *)(ETH_MAC_BASE + ETH_PTPPPSCR)) = freq & 0x0f;
+
+    LL_GPIO_StructInit(&gpio_init);
+    gpio_init.Pin = LL_GPIO_PIN_5;  //LL_GPIO_PIN_8
+    gpio_init.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    gpio_init.Speed = LL_GPIO_SPEED_FREQ_LOW;
+    gpio_init.Mode = LL_GPIO_MODE_ALTERNATE;
+    gpio_init.Alternate = LL_GPIO_AF_11;
+    LL_GPIO_Init(GPIOB, &gpio_init); //GPIOG
+#endif
+}

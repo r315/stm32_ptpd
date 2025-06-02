@@ -9,17 +9,17 @@ extern "C" {
 #endif
 
 /**--------------------------------------------------------------------------**/
-/** 
+/**
   * @brief                           Ethernet PTP defines
-  */ 
+  */
 /**--------------------------------------------------------------------------**/
 /**
   * @}
   */
 
-/** @defgroup ETH_PTP_time_update_method 
+/** @defgroup ETH_PTP_time_update_method
   * @{
-  */ 
+  */
 #define ETH_PTP_FineUpdate        ((uint32_t)0x00000001)  /*!< Fine Update method */
 #define ETH_PTP_CoarseUpdate      ((uint32_t)0x00000000)  /*!< Coarse Update method */
 #define IS_ETH_PTP_UPDATE(UPDATE) (((UPDATE) == ETH_PTP_FineUpdate) || \
@@ -27,12 +27,12 @@ extern "C" {
 
 /**
   * @}
-  */ 
+  */
 
 
-/** @defgroup ETH_PTP_Flags 
+/** @defgroup ETH_PTP_Flags
   * @{
-  */ 
+  */
 #define ETH_PTP_FLAG_TSARU        ((uint32_t)0x00000020)  /*!< Addend Register Update */
 #define ETH_PTP_FLAG_TSITE        ((uint32_t)0x00000010)  /*!< Time Stamp Interrupt Trigger */
 #define ETH_PTP_FLAG_TSSTU        ((uint32_t)0x00000008)  /*!< Time Stamp Update */
@@ -46,34 +46,34 @@ extern "C" {
                                     ((FLAG) == ETH_PTP_FLAG_TSSTU) || \
                                     ((FLAG) == ETH_PTP_FLAG_TSSTI) || \
                                     ((FLAG) == ETH_PTP_FLAG_TSTTR) || \
-                                    ((FLAG) == ETH_PTP_FLAG_TSSO)) 
+                                    ((FLAG) == ETH_PTP_FLAG_TSSO))
 
-/** 
-  * @brief  ETH PTP subsecond increment  
-  */ 
+/**
+  * @brief  ETH PTP subsecond increment
+  */
 #define IS_ETH_PTP_SUBSECOND_INCREMENT(SUBSECOND) ((SUBSECOND) <= 0xFF)
 
 /**
   * @}
-  */ 
+  */
 
 
-/** @defgroup ETH_PTP_time_sign 
+/** @defgroup ETH_PTP_time_sign
   * @{
-  */ 
+  */
 #define ETH_PTP_PositiveTime      ((uint32_t)0x00000000)  /*!< Positive time value */
 #define ETH_PTP_NegativeTime      ((uint32_t)0x80000000)  /*!< Negative time value */
 #define IS_ETH_PTP_TIME_SIGN(SIGN) (((SIGN) == ETH_PTP_PositiveTime) || \
                                     ((SIGN) == ETH_PTP_NegativeTime))
 
-/** 
-  * @brief  ETH PTP time stamp low update  
-  */ 
+/**
+  * @brief  ETH PTP time stamp low update
+  */
 #define IS_ETH_PTP_TIME_STAMP_UPDATE_SUBSECOND(SUBSECOND) ((SUBSECOND) <= 0x7FFFFFFF)
 
-/** 
-  * @brief  ETH PTP registers  
-  */ 
+/**
+  * @brief  ETH PTP registers
+  */
 #define ETH_PTPTSCR     ((uint32_t)0x00000700)  /*!< PTP TSCR register */
 #define ETH_PTPSSIR     ((uint32_t)0x00000704)  /*!< PTP SSIR register */
 #define ETH_PTPTSHR     ((uint32_t)0x00000708)  /*!< PTP TSHR register */
@@ -83,18 +83,18 @@ extern "C" {
 #define ETH_PTPTSAR     ((uint32_t)0x00000718)  /*!< PTP TSAR register */
 #define ETH_PTPTTHR     ((uint32_t)0x0000071C)  /*!< PTP TTHR register */
 #define ETH_PTPTTLR     ((uint32_t)0x00000720)  /* PTP TTLR register */
-
+#define ETH_PTPPPSCR    ((uint32_t)0x0000072C)  /*!< PTP PPS register */
 #define ETH_PTPTSSR     ((uint32_t)0x00000728)  /* PTP TSSR register */
 
 #define IS_ETH_PTP_REGISTER(REG) (((REG) == ETH_PTPTSCR) || ((REG) == ETH_PTPSSIR) || \
                                    ((REG) == ETH_PTPTSHR) || ((REG) == ETH_PTPTSLR) || \
                                    ((REG) == ETH_PTPTSHUR) || ((REG) == ETH_PTPTSLUR) || \
                                    ((REG) == ETH_PTPTSAR) || ((REG) == ETH_PTPTTHR) || \
-                                   ((REG) == ETH_PTPTTLR) || ((REG) == ETH_PTPTSSR)) 
+                                   ((REG) == ETH_PTPTTLR) || ((REG) == ETH_PTPTSSR))
 
-/** 
-  * @brief  ETHERNET PTP clock  
-  */ 
+/**
+  * @brief  ETHERNET PTP clock
+  */
 #define ETH_PTP_OrdinaryClock               ((uint32_t)0x00000000)  /* Ordinary Clock */
 #define ETH_PTP_BoundaryClock               ((uint32_t)0x00010000)  /* Boundary Clock */
 #define ETH_PTP_EndToEndTransparentClock    ((uint32_t)0x00020000)  /* End To End Transparent Clock */
@@ -104,7 +104,7 @@ extern "C" {
                           ((CLOCK) == ETH_PTP_BoundaryClock) || \
                           ((CLOCK) == ETH_PTP_EndToEndTransparentClock) || \
                                       ((CLOCK) == ETH_PTP_PeerToPeerTransparentClock))
-/** 
+/**
   * @brief  ETHERNET snapshot
   */
 #define ETH_PTP_SnapshotMasterMessage          ((uint32_t)0x00008000)  /* Time stamp snapshot for message relevant to master enable */
@@ -121,9 +121,9 @@ extern "C" {
                            ((SNAPSHOT) == ETH_PTP_SnapshotPTPOverEthernetFrames) || \
                            ((SNAPSHOT) == ETH_PTP_SnapshotAllReceivedFrames))
 
-/** 
-  * @brief  PTP  
-  */ 
+/**
+  * @brief  PTP
+  */
 void ETH_EnablePTPTimeStampAddend(void);
 void ETH_EnablePTPTimeStampInterruptTrigger(void);
 void ETH_EnablePTPTimeStampUpdate(void);
@@ -147,6 +147,7 @@ void ethptp_start(uint32_t update_method);
 void ethptp_get_time(ptptime_t *timestamp);
 void ethptp_set_time(ptptime_t *timestamp);
 void ethptp_adj_freq(int32_t adj_ppb);
+void ethptp_set_pps(uint8_t freq);
 
 #ifdef __cplusplus
 }

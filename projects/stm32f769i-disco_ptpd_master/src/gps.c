@@ -37,9 +37,9 @@
 //
 // GPIO Inputs
 //
-// PG14       USART6_TX      GPS_RX
-// PG9        USART6_RX      GPS_TX
-// PF15                      GPS_PPS
+// PC6       USART6_TX      GPS_RX
+// PC7       USART6_RX      GPS_TX
+// PF15                     GPS_PPS
 //
 
 #define RX_BUFFER_SIZE          128
@@ -303,7 +303,8 @@ static void gps_peripheral_init(void)
   gpio_init.Mode = LL_GPIO_MODE_INPUT;
   gpio_init.Pull = LL_GPIO_PULL_DOWN;
   gpio_init.Alternate = LL_GPIO_AF_0;
-  LL_GPIO_Init(GPIOF, &gpio_init);
+  #warning "TODO: config PPS pin"
+  //LL_GPIO_Init(GPIOF, &gpio_init);
 
   // Set the EXTI_Line15 callback function.
   extint_set_callback(LL_EXTI_LINE_15, gps_extint_handler);
@@ -321,23 +322,23 @@ static void gps_peripheral_init(void)
 
   // Configure GPIO pin for USART6 TX.
   LL_GPIO_StructInit(&gpio_init);
-  gpio_init.Pin = LL_GPIO_PIN_9;
+  gpio_init.Pin = LL_GPIO_PIN_6;
   gpio_init.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   gpio_init.Pull = LL_GPIO_PULL_UP;
   gpio_init.Speed = LL_GPIO_SPEED_FREQ_HIGH;
   gpio_init.Mode = LL_GPIO_MODE_ALTERNATE;
   gpio_init.Alternate = LL_GPIO_AF_8;
-  LL_GPIO_Init(GPIOG, &gpio_init);
+  LL_GPIO_Init(GPIOC, &gpio_init);
 
   // Configure GPIO pin for USART6 RX.
   LL_GPIO_StructInit(&gpio_init);
-  gpio_init.Pin = LL_GPIO_PIN_14;
+  gpio_init.Pin = LL_GPIO_PIN_7;
   gpio_init.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   gpio_init.Pull = LL_GPIO_PULL_UP;
   gpio_init.Speed = LL_GPIO_SPEED_FREQ_HIGH;
   gpio_init.Mode = LL_GPIO_MODE_ALTERNATE;
   gpio_init.Alternate = LL_GPIO_AF_8;
-  LL_GPIO_Init(GPIOG, &gpio_init);
+  LL_GPIO_Init(GPIOC, &gpio_init);
 
   // USARTx configured as follows:
   // 9600 baud, 8 Bits, 1 Stop, No Parity,

@@ -175,7 +175,7 @@ void shutdown_system(void)
 // System configurable DHCP flag.
 bool network_config_use_dhcp(void)
 {
-  return false;
+  return true;
 }
 
 // System configurable network IP address.

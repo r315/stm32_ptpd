@@ -47,46 +47,45 @@
 // Macro to define section. On STM32F7 architectures we must be certain
 // the Ethernet buffers are placed into memory suitable for DMA.
 #if defined(STM32F7)
-#if (defined (__GNUC__) || defined (__ARMCC_VERSION)) && !defined (__CC_ARM)
-  #ifndef __SECTION_NAME
-    #define __SECTION_NAME(name)    __attribute__((section(name)))
-  #endif
-#else
-  #ifndef __SECTION_NAME
-    #define __SECTION_NAME(name)    __attribute__((section(name)))
-  #endif
-#endif
+    #if (defined (__GNUC__) || defined (__ARMCC_VERSION)) && !defined (__CC_ARM)
+      #ifndef __SECTION_NAME
+        #define __SECTION_NAME(name)    __attribute__((section(name)))
+      #endif
+    #else
+      #ifndef __SECTION_NAME
+        #define __SECTION_NAME(name)    __attribute__((section(name)))
+      #endif
+    #endif
+    #define ETH_RX_DESC_SECTION ".RxDescripSection"
+    #define ETH_TX_DESC_SECTION ".TxDescripSection"
+    #define ETH_RX_BUF_SECTION  ".RxarraySection"
+    #define ETH_TX_BUF_SECTION  ".TxarraySection"
 #else
     #define __SECTION_NAME(name)
+    #define ETH_RX_DESC_SECTIO  "dtcm"
+    #define ETH_TX_DESC_SECTIO  "dtcm"
+    #define ETH_RX_BUF_SECTION  "dtcm"
+    #define ETH_TX_BUF_SECTION  "dtcm"
 #endif
 
 // Ethernet receive DMA descriptors.
-__ALIGN_BEGIN ETH_DMADescTypeDef dma_rx_descriptor_table[ETH_RXBUFNB] __SECTION_NAME("dtcm") __ALIGN_END;
-
+static __ALIGN_BEGIN ETH_DMADescTypeDef dma_rx_descriptor_table[ETH_RXBUFNB] __SECTION_NAME(ETH_RX_DESC_SECTION) __ALIGN_END;
 // Ethernet transmit DMA descriptors.
-__ALIGN_BEGIN ETH_DMADescTypeDef dma_tx_descriptor_table[ETH_TXBUFNB] __SECTION_NAME("dtcm") __ALIGN_END;
-
+static __ALIGN_BEGIN ETH_DMADescTypeDef dma_tx_descriptor_table[ETH_TXBUFNB] __SECTION_NAME(ETH_TX_DESC_SECTION) __ALIGN_END;
 // Ethernet receive buffers.
-__ALIGN_BEGIN uint8_t dma_rx_buffer[ETH_RXBUFNB][ETH_RX_BUF_SIZE] __SECTION_NAME("dtcm") __ALIGN_END;
-
+static __ALIGN_BEGIN uint8_t dma_rx_buffer[ETH_RXBUFNB][ETH_RX_BUF_SIZE] __SECTION_NAME(ETH_RX_BUF_SECTION) __ALIGN_END;
 // Ethernet transmit buffers.
-__ALIGN_BEGIN uint8_t dma_tx_buffer[ETH_TXBUFNB][ETH_TX_BUF_SIZE] __SECTION_NAME("dtcm") __ALIGN_END;
-
+static __ALIGN_BEGIN uint8_t dma_tx_buffer[ETH_TXBUFNB][ETH_TX_BUF_SIZE] __SECTION_NAME(ETH_TX_BUF_SECTION) __ALIGN_END;
 // Ethernet mutex identifier.
 static osMutexId_t ethernetif_mutex_id = NULL;
-
 // Ethernet timer identifier.
 static osTimerId_t ethernetif_timer_id = NULL;
-
 // Ethernet thread identifier.
 static osThreadId_t ethernetif_thread_id = NULL;
-
 // Ethernet event flags to signal Ethernet TX/RX events.
 static osEventFlagsId_t ethernetif_event_id = NULL;
-
 // Ethernet link status flag. This is true when the link is up.
 static bool ethernetif_link_status = false;
-
 // Ethernet link counts.
 static uint32_t ethernetif_recv_count = 0u;
 static uint32_t ethernetif_recv_bytes = 0u;
@@ -277,15 +276,15 @@ static err_t ethernetif_link_output(struct netif *netif, struct pbuf *p)
       // Point to next descriptor.
       dma_tx_desc = (ETH_DMADescTypeDef *)(dma_tx_desc->Buffer2NextDescAddr);
 
-      // Point to the transmit buffer associated with the transmit descriptor.
-      buffer = (uint8_t *) (dma_tx_desc->Buffer1Addr);
-
       // Verify the buffer is available.
       if ((dma_tx_desc->Status & ETH_DMATXDESC_OWN) != (uint32_t)RESET)
       {
         errval = ERR_USE;
         goto error;
       }
+
+      // Point to the transmit buffer associated with the transmit descriptor.
+      buffer = (uint8_t *) (dma_tx_desc->Buffer1Addr);
 
       byteslefttocopy = byteslefttocopy - (ETH_TX_BUF_SIZE - bufferoffset);
       payloadoffset = payloadoffset + (ETH_TX_BUF_SIZE - bufferoffset);
@@ -328,10 +327,10 @@ static err_t ethernetif_link_output(struct netif *netif, struct pbuf *p)
 
   // Transmit the frame.
 #if defined(USE_STM32F7_DISCOVERY)
-  #warning "TODO: HAL_ETH_TransmitFrame_IT"
-  hal_status = HAL_OK;
+  hal_status = HAL_ETH_TransmitFrame(&ethernetif_handle, framelength);
 #else
   hal_status = HAL_ETH_TransmitFrame_IT(&ethernetif_handle, framelength);
+#endif
 
   // Increment the interface send count and bytes.
   if (hal_status == HAL_OK)
@@ -339,7 +338,6 @@ static err_t ethernetif_link_output(struct netif *netif, struct pbuf *p)
     ethernetif_send_count += 1;
     ethernetif_send_bytes += framelength;
   }
-#endif
 #if LWIP_PTPD
   // Keep track of the DMA TX descriptors used for PTP frames.
   if ((hal_status == HAL_OK) && is_ptp)
@@ -558,6 +556,7 @@ static void ethernetif_link_config(struct netif *netif)
   // Lock the Ethernet mutex to prevent reentrant calls into HAL Ethernet code.
   osMutexAcquire(ethernetif_mutex_id, osWaitForever);
 
+#if !defined(USE_STM32F7_DISCOVERY)
   // Initializes the Ethernet MAC and DMA according to default parameters.
   memset(&ethernetif_handle, 0, sizeof(ethernetif_handle));
   ethernetif_handle.Instance = ETH;
@@ -565,11 +564,7 @@ static void ethernetif_link_config(struct netif *netif)
   ethernetif_handle.Init.PhyAddress = LAN8742A_PHY_ADDRESS;
   ethernetif_handle.Init.MACAddr = &netif->hwaddr[0];
   ethernetif_handle.Init.RxMode = ETH_RXINTERRUPT_MODE;
-#if defined(USE_STM32F7_DISCOVERY)
-  #warning "TODO: TxMode"
-#else
-  ethernetif_handle.Init.TxMode = ETH_TXINTERRUPT_MODE;
-#endif
+  //ethernetif_handle.Init.TxMode = ETH_TXINTERRUPT_MODE;
   ethernetif_handle.Init.ChecksumMode = ETH_CHECKSUM_BY_HARDWARE;
   ethernetif_handle.Init.MediaInterface = ETH_MEDIA_INTERFACE_RMII;
   HAL_ETH_Init(&ethernetif_handle);
@@ -633,7 +628,30 @@ static void ethernetif_link_config(struct netif *netif)
   dma_init.DescriptorSkipLength = 0x0U;
   dma_init.DMAArbitration = ETH_DMAARBITRATION_ROUNDROBIN_RXTX_1_1;
   HAL_ETH_ConfigDMA(&ethernetif_handle, &dma_init);
+#else
+  ethernetif_handle.Instance = ETH;
+  ethernetif_handle.Init.AutoNegotiation = ETH_AUTONEGOTIATION_ENABLE;
+  ethernetif_handle.Init.PhyAddress = LAN8742A_PHY_ADDRESS;
+  ethernetif_handle.Init.MACAddr = &netif->hwaddr[0];
+  ethernetif_handle.Init.RxMode = ETH_RXINTERRUPT_MODE;
+  ethernetif_handle.Init.ChecksumMode = ETH_CHECKSUM_BY_HARDWARE;
+  ethernetif_handle.Init.MediaInterface = ETH_MEDIA_INTERFACE_RMII;
+  ethernetif_handle.Init.Speed = ETH_SPEED_100M;
+  ethernetif_handle.Init.DuplexMode = ETH_MODE_FULLDUPLEX;
 
+  /* configure ethernet peripheral (GPIOs, clocks, MAC, DMA) */
+  if (HAL_ETH_Init(&ethernetif_handle) == HAL_OK)
+  {
+    /* Set netif link flag */
+    netif->flags |= NETIF_FLAG_LINK_UP;
+  }
+
+
+  /* Initialize Tx Descriptors list: Chain Mode */
+  HAL_ETH_DMATxDescListInit(&ethernetif_handle, dma_tx_descriptor_table, &dma_tx_buffer[0][0], ETH_TXBUFNB);
+  /* Initialize Rx Descriptors list: Chain Mode  */
+  HAL_ETH_DMARxDescListInit(&ethernetif_handle, dma_rx_descriptor_table, &dma_rx_buffer[0][0], ETH_RXBUFNB);
+#endif
   // Enable interrupt on change of link status.
   uint32_t regvalue = 0;
   HAL_ETH_ReadPHYRegister(&ethernetif_handle, PHY_ISFR, &regvalue);
@@ -671,9 +689,7 @@ static void ethernetif_link_check(struct netif *netif)
     osMutexAcquire(ethernetif_mutex_id, osWaitForever);
 
     // Configure the Ethernet MAC and DMA.
-#if defined(USE_STM32F7_DISCOVERY)
-    #warning "TODO: HAL_ETH_Config"
-#else
+#if !defined(USE_STM32F7_DISCOVERY)
     HAL_ETH_Config(&ethernetif_handle);
 #endif
     // Enable MAC and DMA transmission and reception.
@@ -724,7 +740,7 @@ static void ethernetif_link_check(struct netif *netif)
 }
 
 // This thread handles the actual reception of packets from the
-// Ethernet interface. It uses the function ethernetif_linkinput() that
+// Ethernet interface. It uses the function ethernetif_link_input() that
 // should handle the actual reception of bytes from the network
 // interface. Then the type of the received packet is determined and
 // the appropriate input function is called.
@@ -829,7 +845,8 @@ err_t ethernetif_init(struct netif *netif)
 
   // Set system configured hardware MAC address.
   hwaddr_t hwaddr = network_config_hwaddr();
-  netif->hwaddr_len = ETH_HWADDR_LEN;
+
+  netif->hwaddr_len = hwaddr.hwaddr_len;
   netif->hwaddr[0] = hwaddr.hwaddr[0];
   netif->hwaddr[1] = hwaddr.hwaddr[1];
   netif->hwaddr[2] = hwaddr.hwaddr[2];

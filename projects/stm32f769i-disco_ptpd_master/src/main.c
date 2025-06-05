@@ -24,10 +24,21 @@
 #include "hardtime.h"
 #include "watchdog.h"
 #include "gps.h"
-
+#include "ethernetif.h"
 
 // Initialization function type.
 typedef void (*init_func_t)(void);
+
+static bool phy_shell_pyh(int argc, char **argv)
+{
+    ethernetif_dump_phy_registers();
+    return true;
+}
+
+void phy_init(void)
+{
+    shell_add_command("phy", phy_shell_pyh);
+}
 
 // Array of initialization functions.
 static const init_func_t init_functions[] =
@@ -46,6 +57,7 @@ static const init_func_t init_functions[] =
   telnet_init,
   peek_init,
   gps_init,
+  phy_init,
   NULL
 };
 

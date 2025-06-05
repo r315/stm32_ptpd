@@ -1049,3 +1049,27 @@ __WEAK uint32_t ethernetif_config_preempt_priority(void)
   return 8;
 }
 
+
+void ethernetif_dump_phy_registers(void)
+{
+	uint32_t reg_value;
+
+    const char *reg_name[] = {
+        "BCR", "BSR",
+        "ID1", "ID2", "ANAR", "AENR", "ANER",
+        "MCSR","SM","SECR","CSIR","ISR","IMR","PSCR"
+
+    };
+
+    const uint8_t reg_index[] = {
+        PHY_BCR, PHY_BSR,
+        2,3,4,5,6,
+        17,18,26,27,29,30,31
+    };
+
+    for (uint8_t i = 0; i < sizeof(reg_index); i++){
+	    HAL_ETH_ReadPHYRegister(&ethernetif_handle, reg_index[i], &reg_value);
+	    syslog_printf(SYSLOG_INFO, "[%d] %s 0x%08lX\n", reg_index[i], reg_name[i], reg_value);
+    }
+
+}

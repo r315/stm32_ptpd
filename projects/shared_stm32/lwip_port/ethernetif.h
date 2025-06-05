@@ -25,5 +25,6 @@ void ethernetif_ptp_adj_freq(int32_t adj_ppb);
 
 // System configurable functions. Implemented as weak functions.
 uint32_t ethernetif_config_preempt_priority(void);
+void ethernetif_dump_phy_registers(void);
 
 #endif

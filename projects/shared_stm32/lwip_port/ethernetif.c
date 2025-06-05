@@ -640,13 +640,7 @@ static void ethernetif_link_config(struct netif *netif)
   ethernetif_handle.Init.DuplexMode = ETH_MODE_FULLDUPLEX;
 
   /* configure ethernet peripheral (GPIOs, clocks, MAC, DMA) */
-  if (HAL_ETH_Init(&ethernetif_handle) == HAL_OK)
-  {
-    /* Set netif link flag */
-    netif->flags |= NETIF_FLAG_LINK_UP;
-  }
-
-
+  HAL_ETH_Init(&ethernetif_handle);
   /* Initialize Tx Descriptors list: Chain Mode */
   HAL_ETH_DMATxDescListInit(&ethernetif_handle, dma_tx_descriptor_table, &dma_tx_buffer[0][0], ETH_TXBUFNB);
   /* Initialize Rx Descriptors list: Chain Mode  */

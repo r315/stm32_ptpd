@@ -167,7 +167,7 @@ static void ptpd_thread(void *arg)
       // Network interface is now up so reinitialize.
       ptpd_protocol_to_state(&ptp_clock, PTP_INITIALIZING);
     }
-    
+
     // Process the current state.
     do
     {
@@ -178,7 +178,7 @@ static void ptpd_thread(void *arg)
       ptpd_protocol_do_state(&ptp_clock);
     }
     while (ptpd_net_select(&ptp_clock.netPath, 0) > 0);
-    
+
     // Wait up to 100ms for something to do, then do something anyway.
     sys_arch_mbox_fetch(&ptp_alert_queue, &msg, 100);
   }

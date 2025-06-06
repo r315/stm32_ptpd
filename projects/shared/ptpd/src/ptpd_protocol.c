@@ -47,7 +47,7 @@ static char *state_string(uint8_t state)
 }
 #endif
 
-// Change state of PTP stack. Perform actions required when leaving 
+// Change state of PTP stack. Perform actions required when leaving
 // 'port_state' and entering 'state'.
 void ptpd_protocol_to_state(PtpClock *ptp_clock, uint8_t state)
 {
@@ -129,7 +129,7 @@ void ptpd_protocol_to_state(PtpClock *ptp_clock, uint8_t state)
       break;
 
     case PTP_LISTENING:
-      ptpd_timer_start(ANNOUNCE_RECEIPT_TIMER, ptp_clock->portDS.announceReceiptTimeout * 
+      ptpd_timer_start(ANNOUNCE_RECEIPT_TIMER, ptp_clock->portDS.announceReceiptTimeout *
                                                pow2ms(ptp_clock->portDS.logAnnounceInterval));
       ptp_clock->portDS.portState = PTP_LISTENING;
       ptp_clock->recommendedState = PTP_LISTENING;
@@ -893,7 +893,7 @@ static void handle_delay_resp(PtpClock *ptp_clock, bool is_from_self)
             ptpd_scaled_nanoseconds_to_internal_time(&correction_field, &ptp_clock->msgTmpHeader.correctionfield);
             ptpd_servo_update_delay(ptp_clock, &ptp_clock->timestamp_delayReqSend, &ptp_clock->timestamp_delayReqRecv, &correction_field);
 
-            // The value of the portDS.logMinDelayReqInterval member of the data set in a multicast 
+            // The value of the portDS.logMinDelayReqInterval member of the data set in a multicast
             // message, and 0x7F in a unicast message.  We assume the value is not being set if it
             // is 0x7f.  This prevents using absurdly long delays based upon this value.  More
             // more investigation is required to see if this is the proper thing to do.

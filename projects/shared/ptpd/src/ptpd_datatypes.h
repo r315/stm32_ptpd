@@ -23,7 +23,7 @@ typedef unsigned char enum8bit_t;
 typedef unsigned short enum16bit_t;
 
 // 4-bit unsigned integer.
-typedef unsigned char uint4bit_t; 
+typedef unsigned char uint4bit_t;
 
 // 48-bit unsigned integer.
 typedef struct
@@ -36,7 +36,7 @@ typedef struct
 typedef unsigned char nibble_t;
 
 // 8-bit data without numerical representation
-typedef char octet_t; 
+typedef char octet_t;
 
 // Struct used to average the offset from master and the one way delay.
 //
@@ -84,7 +84,7 @@ typedef struct
 #endif
 
 // 5.3 Derived data type specifications
-// Below are structures defined by the spec, main program data 
+// Below are structures defined by the spec, main program data
 // structure, and all messages structures.
 
 // 5.3.2 The TimeInterval type represents time intervals in
@@ -270,6 +270,7 @@ typedef struct
   uint8_t priority2; // spec 7.6.2.3
   uint8_t domainNumber;
   bool slaveOnly;
+  uint8_t transportSpecific; // (spec annex D)
 } DefaultDS;
 
 // Brief spec 8.2.2 current data set.
@@ -284,7 +285,7 @@ typedef struct
 typedef struct
 {
   PortIdentity parentPortIdentity;
-  // 7.6.4 Parent clock statistics - parentDS 
+  // 7.6.4 Parent clock statistics - parentDS
   bool  parentStats; // spec 7.6.4.2
   int16_t observedParentOffsetScaledLogVariance; // spec 7.6.4.3
   int32_t observedParentClockPhaseChangeRate; // spec 7.6.4.4

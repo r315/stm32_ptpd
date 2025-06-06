@@ -177,12 +177,13 @@ SRCS += ../../libraries/LWIP-2.1.2/src/core/ipv6/nd6.c
 SRCS += ../../libraries/LWIP-2.1.2/src/netif/ethernet.c
 SRCS += ../../libraries/LWIP-2.1.2/src/netif/lowpan6.c
 
+# LWIP Apps
+SRCS += ../../libraries/LWIP-2.1.2/src/apps/mdns/mdns.c
+SRCS += ../../libraries/LWIP-2.1.2/src/apps/sntp/sntp.c
+
 # LWIP Port
 SRCS += ../shared_stm32/lwip_port/ethernetif.c
 SRCS += ../shared_stm32/lwip_port/sys_arch.c
-
-# LWIP Apps
-SRCS += ../../libraries/LWIP-2.1.2/src/apps/mdns/mdns.c
 
 # RTOS Config
 SRCS += ./src/RTX_Config.c

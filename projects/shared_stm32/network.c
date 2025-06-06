@@ -21,6 +21,8 @@
 #include "syslog.h"
 #include "shell.h"
 #include "network.h"
+#include "lwip/apps/sntp.h"
+#include "systime.h"
 
 #if LWIP_PTPD
 #include "ptpd.h"
@@ -44,8 +46,14 @@ static struct netif network_interface;
 // Don't build ping if LWIP_RAW not configured for use in lwipopts.h.
 #if LWIP_RAW
 #define PING_ENABLED              1
+#define SNTP_ENABLED              1
 #else
 #dfeine PING_ENABLED              0
+#define SNTP_ENABLED              0
+#endif
+
+#if SNTP_ENABLED
+static void nertwork_sntp_init(void);
 #endif
 
 // Should ping be included?
@@ -281,7 +289,7 @@ static void ping_send_now(const ip_addr_t *ping_addr, uint32_t count)
       }
     }
 
-    // Is this an IO event? 
+    // Is this an IO event?
     if ((event & (0x80000000 | PING_EVENT_IO)) == PING_EVENT_IO)
     {
       // Cancel the timeout.
@@ -400,13 +408,13 @@ static void network_address_dump(struct netif *netif)
   ip4_addr_t netmask = netif->netmask;
   ip4_addr_t gateway = netif->gw;
   syslog_printf(SYSLOG_INFO, "NETWORK: address is %d.%d.%d.%d",
-                (uint8_t) ipaddr.addr, (uint8_t) (ipaddr.addr >> 8), 
+                (uint8_t) ipaddr.addr, (uint8_t) (ipaddr.addr >> 8),
                 (uint8_t) (ipaddr.addr >> 16), (uint8_t) (ipaddr.addr >> 24));
   syslog_printf(SYSLOG_INFO, "NETWORK: netmask is %d.%d.%d.%d",
-                (uint8_t) netmask.addr, (uint8_t) (netmask.addr >> 8), 
+                (uint8_t) netmask.addr, (uint8_t) (netmask.addr >> 8),
                 (uint8_t) (netmask.addr >> 16), (uint8_t) (netmask.addr >> 24));
   syslog_printf(SYSLOG_INFO, "NETWORK: gateway is %d.%d.%d.%d",
-                (uint8_t) gateway.addr, (uint8_t) (gateway.addr >> 8), 
+                (uint8_t) gateway.addr, (uint8_t) (gateway.addr >> 8),
                 (uint8_t) (gateway.addr >> 16), (uint8_t) (gateway.addr >> 24));
 }
 
@@ -429,7 +437,7 @@ static void network_link_callback(struct netif *netif)
     if (network_use_dhcp())
     {
       // Start or restart DHCP negotiation for this network interface.
-      // If LWIP_DHCP_AUTOIP_COOP is defined, DHCP and AUTOIP will both 
+      // If LWIP_DHCP_AUTOIP_COOP is defined, DHCP and AUTOIP will both
       // be both enabled at the same time.
       dhcp_start(&network_interface);
     }
@@ -455,6 +463,9 @@ static void network_status_callback(struct netif *netif)
   {
     // Dump the static IP addresses.
     network_address_dump(&network_interface);
+    #if SNTP_ENABLED
+    nertwork_sntp_init();
+    #endif
   }
 }
 
@@ -669,13 +680,13 @@ static bool network_shell_network(int argc, char **argv)
     shell_printf("hostname: %s\n", network_get_hostname());
     shell_printf("dhcp: %s\n", network_use_dhcp() ? "enabled" : "disabled");
     shell_printf("address: %d.%d.%d.%d\n",
-                 (uint8_t) address.addr, (uint8_t) (address.addr >> 8), 
+                 (uint8_t) address.addr, (uint8_t) (address.addr >> 8),
                  (uint8_t) (address.addr >> 16), (uint8_t) (address.addr >> 24));
     shell_printf("netmask: %d.%d.%d.%d\n",
-                 (uint8_t) netmask.addr, (uint8_t) (netmask.addr >> 8), 
+                 (uint8_t) netmask.addr, (uint8_t) (netmask.addr >> 8),
                  (uint8_t) (netmask.addr >> 16), (uint8_t) (netmask.addr >> 24));
     shell_printf("gateway: %d.%d.%d.%d\n",
-                 (uint8_t) gateway.addr, (uint8_t) (gateway.addr >> 8), 
+                 (uint8_t) gateway.addr, (uint8_t) (gateway.addr >> 8),
                  (uint8_t) (gateway.addr >> 16), (uint8_t) (gateway.addr >> 24));
     shell_puts("hwaddr: ");
     for (i = 0; i < network_interface.hwaddr_len; ++i)
@@ -953,4 +964,26 @@ __WEAK bool network_config_ptpd_slave_only(void)
   // Default PTPD as slave only.
   return true;
 }
+#endif
+
+#if SNTP_ENABLED
+
+static const ip4_addr_t sntp_ip = IPADDR4_INIT_BYTES(200, 160, 7, 186);   // SNTP server ip
+
+void network_set_system_time (uint32_t sec)
+{
+    systime_set((uint64_t)sec * 1000000000UL);            // nanoseconds
+    syslog_printf(SYSLOG_INFO, "System time set!\n\r");
+}
+
+static void nertwork_sntp_init (void)
+{
+	if (sntp_enabled() != 1 && !ip4_addr_isany(netif_ip4_addr(&network_interface))){
+		syslog_printf(SYSLOG_INFO, "NETWORK: Initializing SNTP\n\r");
+	    sntp_setoperatingmode(SNTP_OPMODE_POLL);	// Set SNTP operation mode to Polling
+	    sntp_setserver(0, &sntp_ip);				// Set server 0 as the supplied ip address
+	    sntp_init();								// Start STNP process
+	}
+}
+
 #endif

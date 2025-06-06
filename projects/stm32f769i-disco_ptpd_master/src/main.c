@@ -193,25 +193,25 @@ bool network_config_use_dhcp(void)
 // System configurable network IP address.
 ip4_addr_t network_config_address(void)
 {
-  return network_str_to_address("192.168.1.76");
+  return network_str_to_address("0.0.0.0");
 }
 
 // System configurable netmask.
 ip4_addr_t network_config_netmask(void)
 {
-  return network_str_to_address("255.255.255.0");
+  return network_str_to_address("0.0.0.0");
 }
 
 // System configurable gateway IP address.
 ip4_addr_t network_config_gateway(void)
 {
-  return network_str_to_address("192.168.1.1");
+  return network_str_to_address("0.0.0.0");
 }
 
 // System configurable hardware address.
 hwaddr_t network_config_hwaddr(void)
 {
-  hwaddr_t hwaddr = { 6, { 0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x4C } };
+  hwaddr_t hwaddr = { 6, { 0x00, 0x73, 0x70, 0x50, 0x80, 0x01 } };
   return hwaddr;
 }
 

@@ -114,7 +114,7 @@ void HAL_ResumeTick(void)
   ntime_resume();
 }
 
-// This function is called to increment a global variable used as 
+// This function is called to increment a global variable used as
 // application time base. This does nothing in this implementation.
 //
 // Overrides weak function of same name in stm32f4xx_hal.c.

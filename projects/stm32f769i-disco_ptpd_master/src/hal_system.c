@@ -247,9 +247,11 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef *eth_handle)
     // ETH_RMII_TX_EN  -------> PG11
     // ETH_RMII_TXD0   -------> PG13
     // ETH_RMII_TXD1   -------> PG14
+    // ETH_PPS_OUT     -------> PB5
 
     // Enable GPIO clocks.
     __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_GPIOG_CLK_ENABLE();
 
@@ -270,6 +272,10 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef *eth_handle)
     // Configure PG11, PG13 and PG14.
     GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_13 | GPIO_PIN_14;
     HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+    // Configure PB5
+    GPIO_InitStruct.Pin = GPIO_PIN_5;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     // Peripheral interrupt init.
     HAL_NVIC_SetPriority(ETH_IRQn, ethernetif_config_preempt_priority(), 0);

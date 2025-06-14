@@ -37,8 +37,8 @@ extern "C" {
 #define DEFAULT_CLOCK_CLASS             248
 #define DEFAULT_CLOCK_CLASS_SLAVE_ONLY  255
 #define DEFAULT_CLOCK_ACCURACY          0xFE
-#define DEFAULT_PRIORITY1               248
-#define DEFAULT_PRIORITY2               248
+#define DEFAULT_PRIORITY1               127
+#define DEFAULT_PRIORITY2               127
 #define DEFAULT_CLOCK_VARIANCE          5000    // To be determined in 802.1AS.
 #define DEFAULT_MAX_FOREIGN_RECORDS     5
 #define DEFAULT_PARENTS_STATS           false
